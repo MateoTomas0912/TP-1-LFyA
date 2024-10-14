@@ -14,15 +14,15 @@ Esta función debe implementar la lógica suficiente para que al imprimir en pan
 Devuelve true en caso de que la cadena se derive de la gramática y false en caso contrario. 
 
 Para el módulo mencionado previamente, implementar sus correspondientes test para validar el correcto funcionamiento del mismo. Dichos test deben incluir al menos:
-Una gramática LL(1) sin recursión a derecha
-Una gramática LL(1) con recursión a derecha
-Una gramática LL(1) que incluya lambda en sus derivaciones
-Una gramática LL(1) que no incluya lambda en sus derivaciones
-Una gramática LL(1) con reglas de producción innecesarias.
-Una gramática LL(1) con símbolos inaccesibles desde el axioma.
-Una gramática LL(1) con no terminales no generativos.
-Por cada uno de los incisos previos, una gramática que no sea LL(1).
-Una gramática no LL(1) con recursión a izquierda
+- Una gramática LL(1) sin recursión a derecha
+- Una gramática LL(1) con recursión a derecha
+- Una gramática LL(1) que incluya lambda en sus derivaciones
+- Una gramática LL(1) que no incluya lambda en sus derivaciones
+- Una gramática LL(1) con reglas de producción innecesarias.
+- Una gramática LL(1) con símbolos inaccesibles desde el axioma.
+- Una gramática LL(1) con no terminales no generativos.
+- Por cada uno de los incisos previos, una gramática que no sea LL(1).
+- Una gramática no LL(1) con recursión a izquierda
 
 ## Consideraciones:
 Debe ser capaz de detectar y resolver reglas de producción innecesarias, símbolos inaccesibles desde el axioma y no terminales no generativos.
