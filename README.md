@@ -31,3 +31,5 @@ Terminales y no terminales pueden contener más de una letra.
 El símbolo “:” y la palabra “lambda” son reservadas.
 La antecedente de la primera regla de la gramática es el no terminal distinguido.
 Las producciones se separan con \n, el antecedente del consecuente con “:” y los elementos del consecuente con espacio/s.
+
+![modeloDatosContenido](https://drive.google.com/uc?id=1RtviU1obrzd8mKGzaY9upE51GOa_Oxz6WKslbClyLc4)
