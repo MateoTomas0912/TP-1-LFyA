@@ -18,13 +18,82 @@ class Gramatica:
                 self.producciones[nt] = [] # Lista para el no terminal.
             self.producciones[nt].append(derivacion) #Derivacion al no terminal.
 
-        # Calcular First, Follow y Select
-        self.calcular_first()
-        self.calcular_follow()
-        self.calcular_select()
+        # Limpiar gramatica
+        self.limpiar_gramatica()
+
+        # Solo calcular FIRST, FOLLOW y SELECT si hay producciones válidas
+        if self.producciones:
+            self.calcular_first()
+            self.calcular_follow()
+            self.calcular_select()
+        else:
+            raise ValueError("Error: La gramática no tiene producciones válidas después de la limpieza.")
 
         # Mostrar la gramática con First, Follow y Select
         self.mostrar_gramatica()
+
+    def eliminar_inaccesibles(self):
+        """
+        Elimina los símbolos que no son accesibles desde el axioma.
+        """
+        accesibles = set()
+        pendientes = [list(self.producciones.keys())[0]]  # Comienza desde el axioma.
+
+        while pendientes:
+            actual = pendientes.pop()
+            accesibles.add(actual)
+
+            for produccion in self.producciones.get(actual, []):
+                for simbolo in produccion:
+                    if simbolo.isupper() and simbolo not in accesibles:
+                        pendientes.append(simbolo)
+
+        # Eliminar reglas con símbolos inaccesibles.
+        self.producciones = {nt: prods for nt, prods in self.producciones.items() if nt in accesibles}
+
+    def eliminar_no_generativos(self):
+        """
+        Elimina los no terminales que no son capaces de generar cadenas de solo terminales.
+        """
+        generativos = set()
+        cambios = True
+
+        while cambios:
+            cambios = False
+            for nt, prods in self.producciones.items():
+                if nt not in generativos:
+                    for prod in prods:
+                        # Revisa si la producción puede derivar en terminales.
+                        if all(simbolo.islower() or simbolo in generativos for simbolo in prod):
+                            generativos.add(nt)
+                            cambios = True
+
+        # Eliminar no terminales no generativos y sus producciones
+        self.producciones = {nt: prods for nt, prods in self.producciones.items() if nt in generativos}
+
+        # También elimina producciones que contienen no terminales no generativos
+        for nt in list(self.producciones.keys()):
+            self.producciones[nt] = [prod for prod in self.producciones[nt] if
+                                     all(s.islower() or s in generativos for s in prod)]
+
+    def eliminar_producciones_innecesarias(self):
+        """
+        Elimina producciones redundantes de la forma U ::= U.
+        """
+        for nt in list(self.producciones):
+            self.producciones[nt] = [p for p in self.producciones[nt] if p != [nt]]
+
+    def limpiar_gramatica(self):
+        """
+        Aplica todas las limpiezas necesarias.
+        """
+        self.eliminar_producciones_innecesarias()  # Finalmente, limpia producciones innecesarias.
+        self.eliminar_inaccesibles()  # Primero, elimina símbolos inaccesibles.
+        self.eliminar_no_generativos()  # Luego, elimina no generativos.
+
+        # Asegúrate de que al menos un no terminal esté presente después de la limpieza
+        if not self.producciones:
+            raise ValueError("Error: La gramática está vacía después de la limpieza.")
 
     #Calcula first para cada no terminal.
     def calcular_first(self):
@@ -35,28 +104,34 @@ class Gramatica:
     #Conjunto de first
     def obtener_first(self, simbolo):
         if simbolo.islower() or simbolo in ['+', '-', '*', '/', '(', ')']:
-            return {simbolo} #Si es terminal, devuelve lo mismo. Habria que haber usado un diccionario.
+            return {simbolo}  # Si es terminal, devuelve lo mismo.
 
         if simbolo == 'lambda':
             return {'lambda'}
 
         if simbolo in self.en_proceso:
-            return set() #Evitar bucles por recursion directa o indirecta.
+            return set()  # Evitar bucles por recursión directa o indirecta.
 
-        self.en_proceso.add(simbolo) #Marca el simbolo como en proceso.
-        first_set = set() #Inicializa el conjunto FIRST para el simbolo.
+        self.en_proceso.add(simbolo)  # Marca el símbolo como en proceso.
+        first_set = set()  # Inicializa el conjunto FIRST para el símbolo.
 
-        #Recorre cada prodccion del simbolo para calcular su FIRST.
+        # Manejar el caso donde el símbolo no está en producciones
+        if simbolo not in self.producciones:
+            print(f" Advertencia: El no terminal '{simbolo}' no tiene producción definida.")
+            self.en_proceso.remove(simbolo)  # Libera su estado en proceso
+            return set()  # Retorna un conjunto vacío
+
+        # Recorre cada producción del símbolo para calcular su FIRST.
         for produccion in self.producciones[simbolo]:
             for sub_simbolo in produccion:
-                sub_first = self.obtener_first(sub_simbolo) #Firsth simbolo siguiente.
-                first_set.update(sub_first - {'lambda'}) #No deja lambda
+                sub_first = self.obtener_first(sub_simbolo)  # Calcula FIRST del símbolo siguiente.
+                first_set.update(sub_first - {'lambda'})  # No deja lambda
                 if 'lambda' not in sub_first:
-                    break #Deja de agregar si no hay lambda
+                    break  # Deja de agregar si no hay lambda
             else:
-                first_set.add('lambda') #Si todos lo contienen, lo agrega.
+                first_set.add('lambda')  # Si todos lo contienen, lo agrega.
 
-        self.en_proceso.remove(simbolo) #Libera su estado en proceso.
+        self.en_proceso.remove(simbolo)  # Libera su estado en proceso.
         return first_set
 
     #Calcular follow.
@@ -129,6 +204,9 @@ class Gramatica:
 
     #Evaluar si pertenece a LL(1).
     def evaluar_cadena(self, cadena, limite_ciclos=1000):
+
+        self.limpiar_gramatica()
+
         entrada = cadena.split() + ['$']  # Divide la cadena y agrega el símbolo de fin.
         pila = ['$']  # Inicializa la pila con el símbolo de fin.
         inicial = list(self.producciones.keys())[0]  # No terminal inicial.
@@ -173,6 +251,9 @@ class Gramatica:
 
     #Verifica si es LL1 revisando conflictos.
     def es_ll1(self):
+
+        self.limpiar_gramatica()
+
         for nt in self.producciones:
             select_sets = [self.select[(nt, tuple(prod))] for prod in self.producciones[nt]]
             combinados = set()  # Almacena símbolos únicos del SELECT.
